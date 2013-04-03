@@ -1,0 +1,25 @@
+Scrapes data on ETFs and mutual funds
+
+Requires OpenOffice/LibreOffice for reading CSV files
+
+Requires Nokogiri for parsing data from HTML pages
+To install Nokogiri, enter the following command (under your username, not root):
+gem install nokogiri
+More on Nokogiri at http://ruby.bastardsbook.com/chapters/html-parsing/
+
+Requires Postgres
+To install Postgres, enter the following command (under your username, not root):
+gem install pg
+
+Setting up the database on your local machine:
+sudo adduser bargainstockfunds
+sudo su postgres -c psql
+CREATE ROLE bargainstockfunds SUPERUSER LOGIN;
+\q
+sudo -u bargainstockfunds createdb db_bsf_new
+
+The database password is stored in the db/.password.txt file (NOT included in this repository)
+
+Ruby and Rails installed with RVM
+Ruby version: ruby 1.9.3p385 (2013-02-06 revision 39114) [i686-linux]
+Rails version: Rails 3.2.12
