@@ -206,7 +206,7 @@ class FundDatabase
   # Create our table of fund data
   def createFundTable
     command_create = ''
-    command_create += 'CREATE TABLE funds ( '
+    command_create += 'CREATE TABLE funds_new ( '
     command_create += 'index int, '
     command_create += 'symbol varchar(' + $len_symbol.to_s() + '), '
     command_create += 'name varchar(' + $len_name.to_s() + '), '
@@ -235,7 +235,7 @@ class FundDatabase
   
   # Drop our table of fund data
   def dropFundTable
-    @conn.exec("DROP TABLE funds")
+    @conn.exec("DROP TABLE funds_new")
   end
   
   # Prepared statements prevent SQL injection attacks.  However, for the connection, the prepared statements
@@ -243,7 +243,7 @@ class FundDatabase
   # performance improvement using prepared statements.
   def prepareInsertFundStatement
     str1 = "insert_fund"
-    str2 = "insert into funds (Index, Symbol, Name, Type, Objective) values ($1, $2, $3, $4, $5)"
+    str2 = "insert into funds_new (Index, Symbol, Name, Type, Objective) values ($1, $2, $3, $4, $5)"
     @conn.prepare(str1, str2)
   end
   
@@ -254,34 +254,13 @@ class FundDatabase
   
   # Get index from table
   def scrollSymbolsFromTable
-    str1 = "SELECT symbol FROM funds"
+    str1 = "SELECT symbol FROM funds_new"
     @conn.exec(str1) do |result|
       result.each do |row|
         yield row if block_given?
       end
     end
   end
-  
-  # Get symbol from table
-  #def getSymbolFromTable (n_index)
-    #str1 = "SELECT symbol FROM funds WHERE index=" + n_index.to_s()
-    #@conn.exec(str1) do |result|
-      #result.each do |row|
-        #yield row if block_given?
-      #end
-    #end
-  #end
-  
-  # Get our data back
-  #def queryFundTable
-    #@conn.exec( "SELECT * FROM funds" ) do |result|
-      #result.each do |row|
-        #yield row if block_given?
-      #end
-    #end
-  #end
-
-  
   
   # Print to CSV file
   def printCSV (filename_short)
@@ -517,6 +496,8 @@ def get_db_params
   # $db_user was set in the get_env function
   file_password = $dir_db + '/.password.txt'
   $db_password = string_from_file file_password
+  $db_password = $db_password.gsub("\n", "")
+  puts '*' + $db_password + '*'
 end
 
 def fillDatabaseFundLong
