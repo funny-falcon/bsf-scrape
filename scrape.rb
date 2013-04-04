@@ -21,6 +21,7 @@ require 'pg'
 $exec_long = true
 
 # Assume this is the development environment
+$username = ''
 $is_devel = true
 $dir_home = ''
 $dir_scrape = ''
@@ -348,23 +349,22 @@ def get_env
   $dir_home = '/home/' + username
   $dir_scrape = $dir_home + '/bsf-scrape'
   $is_devel = Dir.exists? $dir_scrape
-  
-  $db_name = 'pg_bsf' # Both development and production environments
-  
+  $username = username
+  #$db_name = 'pg_bsf' # Both development and production environments
   if ($is_devel == true)
     puts
     puts 'Environment: DEVELOPMENT'
-    $db_user = username
-    $db_password = '' # Password not needed in development environment
+    #$db_user = username
+    #$db_password = '' # Password not needed in development environment
   else
     $dir_scrape = '/home/doppler/webapps'
     $dir_scrape += '/bsf_scrape/bsf-scrape'
     puts
     puts 'Environment: PRODUCTION'
-    file_username = $dir_db + '/.username.txt'
-    $db_user = string_from_file file_username
-    file_password = $dir_db + '/.password.txt'
-    $db_password = string_from_file file_password
+    #file_username = $dir_db + '/.username.txt'
+    #$db_user = string_from_file file_username
+    #file_password = $dir_db + '/.password.txt'
+    #$db_password = string_from_file file_password
   end
 end
 
@@ -385,6 +385,19 @@ def create_dir_all
   create_dir $dir_input 
   create_dir $dir_downloads
   create_dir $dir_output
+end
+
+def get_db_params
+  $db_name = 'pg_bsf' # Both development and production environments
+  if ($is_devel == true)
+    $db_user = $username
+    $db_password = '' # Password not needed in development environment
+  else
+    file_username = $dir_db + '/.username.txt'
+    $db_user = string_from_file file_username
+    file_password = $dir_db + '/.password.txt'
+    $db_password = string_from_file file_password
+  end
 end
 
 # Get the age of a given file (in hours)
@@ -1035,6 +1048,7 @@ def main
   select_length
   get_env
   create_dir_all
+  get_db_params
   if $exec_long
     fillDatabaseFundLong
   else
