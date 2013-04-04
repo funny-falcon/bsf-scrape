@@ -267,7 +267,7 @@ class FundDatabase
     csv_path = '/var/lib/postgresql/8.4/main/' + filename_short
     puts 'Copying the database to: '
     puts csv_path
-    @conn.exec ("COPY funds TO '" + csv_path + "' With CSV HEADER;")
+    @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
   end
   
 end
@@ -326,6 +326,19 @@ def select_length
   end
 end
 
+# Put contents of file into string
+def string_from_file (filename)
+  str_output = ''
+  f = File.open(filename, "r")
+  f.each_line do |line|
+    str_output += line
+  end
+  # The newline at the end of the file MUST be removed when
+  # acquiring the username and password.
+  str_output = str_output.gsub("\n", "")
+  return str_output
+end
+
 ########################################
 # Development or production environment?
 ########################################
@@ -335,16 +348,23 @@ def get_env
   $dir_home = '/home/' + username
   $dir_scrape = $dir_home + '/bsf-scrape'
   $is_devel = Dir.exists? $dir_scrape
-  if ($is_devel == false)
+  
+  $db_name = 'pg_bsf' # Both development and production environments
+  
+  if ($is_devel == true)
+    puts
+    puts 'Environment: DEVELOPMENT'
+    $db_user = username
+    $db_password = '' # Password not needed in development environment
+  else
     $dir_scrape = '/home/doppler/webapps'
     $dir_scrape += '/bsf_scrape/bsf-scrape'
     puts
     puts 'Environment: PRODUCTION'
-    $db_user = 'bsf_user'
-  else
-    puts
-    puts 'Environment: DEVELOPMENT'
-    $db_user = username
+    file_username = $dir_db + '/.username.txt'
+    $db_user = string_from_file file_username
+    file_password = $dir_db + '/.password.txt'
+    $db_password = string_from_file file_password
   end
 end
 
@@ -489,17 +509,6 @@ def is_substring_in_entry (array, entry)
   return output_local
 end
 
-# Get password from file instead of source code
-def get_db_params
-  puts 'Getting db login info'
-  $db_name = 'bsf_db_new'
-  # $db_user was set in the get_env function
-  file_password = $dir_db + '/.password.txt'
-  $db_password = string_from_file file_password
-  $db_password = $db_password.gsub("\n", "")
-  puts '*' + $db_password + '*'
-end
-
 def fillDatabaseFundLong
   download_fund_lists # Download the list of funds from Bloomberg
     
@@ -641,7 +650,6 @@ def fillDatabaseFundLong
   puts "Writing fund data to database"
 
   # Start the database  
-  get_db_params
   fd = FundDatabase.new()
   fd.connect
   begin
@@ -811,7 +819,6 @@ def fillDatabaseFundShort
   puts "Finished writing fund data to database"
 
   # Start the database  
-  get_db_params
   fd = FundDatabase.new()
   fd.connect
   begin
@@ -901,7 +908,6 @@ def download_fund_data
   puts 'NOTE: This is a VERY long process.'
   
   # Start the database  
-  get_db_params
   fd = FundDatabase.new()
   fd.connect
   i = 0 # Number of rows completed
@@ -947,17 +953,6 @@ def download_fund_data
 
   
 end
-
-# Put contents of file into string
-def string_from_file (filename)
-  str_output = ''
-  f = File.open(filename, "r")
-  f.each_line do |line|
-    str_output += line
-  end
-  return str_output
-end
-
 
 
 

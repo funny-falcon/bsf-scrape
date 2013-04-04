@@ -15,20 +15,19 @@ Requires Postgres
 To install Postgres, enter the following command (under your username, not root):
 gem install pg
 
-The password for username bsf_user in the local environment should be
-the same as that for the database user bsf_user in the production
-environment.
+Setting up the database and giving yourself Postgres access on your local machine:
+sudo su postgres -c psql
+CREATE ROLE [local username] SUPERUSER LOGIN;
+\q
+createdb pg_bsf
 
-The database password for bsf_user is stored in the db/.password.txt file.
+The database username needed in the scrape.rb script is in the db/.usename.txt file.
+The database password needed in the  is stored in the db/.password.txt file.
 You must create this file, put the password in it, and save the file.
 You also need this password when you add bsf_user to the local environment.
 For security reasons, the password file is ignored by Git.
 
-Setting up the database and bsf_user on your local machine:
-sudo su postgres -c psql
-CREATE ROLE [local username] SUPERUSER LOGIN;
-\q
-createdb bsf_db_new
+
 
 
 
