@@ -253,11 +253,11 @@ class FundDatabase
   
   # Get symbol from table
   def getSymbolFromTable
-    @conn.exec( "SELECT symbol FROM funds" ) do |result|
-      result.each do |row|
-        yield row if block_given?
-      end
-    end
+    #@conn.exec( "SELECT symbol FROM funds" ) do |result|
+      #result.each do |row|
+        #yield row if block_given?
+      #end
+    #end
   end
   
   # Get our data back
@@ -343,16 +343,17 @@ def get_env
   username = Etc.getlogin
   $dir_home = '/home/' + username
   $dir_scrape = $dir_home + '/bsf-scrape'
-  $db_user = username
   $is_devel = Dir.exists? $dir_scrape
   if ($is_devel == false)
     $dir_scrape = '/home/doppler/webapps'
     $dir_scrape += '/bsf_scrape/bsf-scrape'
     puts
     puts 'Environment: PRODUCTION'
+    $db_user = 'bsf_user'
   else
     puts
     puts 'Environment: DEVELOPMENT'
+    $db_user = username
   end
 end
 
@@ -501,7 +502,7 @@ end
 def get_db_params
   puts 'Getting db login info'
   $db_name = 'bsf_db_new'
-  $db_user = 'bsf_user'
+  # $db_user was set in the get_env function
   file_password = $dir_db + '/.password.txt'
   $db_password = string_from_file file_password
 end
