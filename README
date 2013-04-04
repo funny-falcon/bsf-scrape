@@ -1,5 +1,9 @@
 Scrapes data on ETFs and mutual funds
 
+Ruby and Rails installed with RVM in Debian Squeeze
+Ruby version: ruby 1.9.3p385 (2013-02-06 revision 39114) [i686-linux]
+Rails version: Rails 3.2.12
+
 Requires OpenOffice/LibreOffice for reading CSV files
 
 Requires Nokogiri for parsing data from HTML pages
@@ -11,15 +15,23 @@ Requires Postgres
 To install Postgres, enter the following command (under your username, not root):
 gem install pg
 
-Setting up the database on your local machine:
-sudo adduser bargainstockfunds
+The password for username bsf_user in the local environment should be
+the same as that for the database user bsf_user in the production
+environment.
+
+The database password for bsf_user is stored in the db/.password.txt file.
+You must create this file, put the password in it, and save the file.
+You also need this password when you add bsf_user to the local environment.
+For security reasons, the password file is ignored by Git.
+
+Setting up the database and bsf_user on your local machine:
 sudo su postgres -c psql
-CREATE ROLE bargainstockfunds SUPERUSER LOGIN;
+CREATE ROLE bsf_user SUPERUSER LOGIN;
 \q
-sudo -u bargainstockfunds createdb db_bsf_new
+sudo adduser bsf_user
+sudo -u bsf_user createdb db_bsf_new
 
-The database password is stored in the db/.password.txt file (NOT included in this repository)
 
-Ruby and Rails installed with RVM
-Ruby version: ruby 1.9.3p385 (2013-02-06 revision 39114) [i686-linux]
-Rails version: Rails 3.2.12
+
+
+

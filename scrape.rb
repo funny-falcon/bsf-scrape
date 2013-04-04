@@ -45,7 +45,6 @@ $arrayFund = []
 $db_name = ''
 $db_user = ''
 $db_password = ''
-$db_create_table_str = ''
 
 #####################
 # CREATE CLASSES HERE
@@ -501,8 +500,8 @@ end
 # Get password from file instead of source code
 def get_db_params
   puts 'Getting db login info'
-  $db_name = 'bsf_new'
-  $db_user = 'bargainstockfunds'
+  $db_name = 'bsf_db_new'
+  $db_user = 'bsf_user'
   file_password = $dir_db + '/.password.txt'
   $db_password = string_from_file file_password
 end
