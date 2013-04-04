@@ -1,32 +1,42 @@
 Scrapes data on ETFs and mutual funds
 
+DEVELOPMENT ENVIRONMENT
+Local machine setup at http://www.jasonhsu.com/ror-install
 Ruby and Rails installed with RVM in Debian Squeeze
 Ruby version: ruby 1.9.3p385 (2013-02-06 revision 39114) [i686-linux]
 Rails version: Rails 3.2.12
+OpenOffice/LibreOffice for reading CSV files
+Nokogiri for parsing data from HTML pages (http://ruby.bastardsbook.com/chapters/html-parsing/)
+Postgres installed
 
-Requires OpenOffice/LibreOffice for reading CSV files
-
-Requires Nokogiri for parsing data from HTML pages
-To install Nokogiri, enter the following command (under your username, not root):
+DEVELOPMENT ENVIRONMENT PROCEDURE
+Enter the following commands:
 gem install nokogiri
-More on Nokogiri at http://ruby.bastardsbook.com/chapters/html-parsing/
-
-Requires Postgres
-To install Postgres, enter the following command (under your username, not root):
 gem install pg
-
-Setting up the database and giving yourself Postgres access on your local machine:
+cd
+git clone https://github.com/jhsu802701/bsf-scrape.git
 sudo su postgres -c psql
 CREATE ROLE [local username] SUPERUSER LOGIN;
 \q
 createdb pg_bsf
 
-The database username needed in the scrape.rb script is in the db/.usename.txt file.
-The database password needed in the  is stored in the db/.password.txt file.
-You must create this file, put the password in it, and save the file.
-You also need this password when you add bsf_user to the local environment.
-For security reasons, the password file is ignored by Git.
+PRODUCTION ENVIRONMENT
+Host: WebFaction
+Type of app: custom app (listening on port)
 
+PRODUCTION ENVIRONMENT PROCEDURE:
+1.  Go to 
+http://docs.webfaction.com/software/rails.html?highlight=ruby%20on%20rails#ruby-on-rails
+and follow the instructions in the "Tip: Add bin to PATH" section.
+2.  Enter the following commands:
+gem install nokogirki
+gem install pg -- --with-pg-config=/usr/pgsql-9.1/bin/pg_config
+cd /home/doppler/webapps/bsf_scrape
+git clone https://github.com/jhsu802701/bsf-scrape.git
+cd bsf-scrape
+mkdir db
+echo '[db_username]' >> db/.username.txt
+echo '[db_password]' >> db/.password.txt
 
 
 
