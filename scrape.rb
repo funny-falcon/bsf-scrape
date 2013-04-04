@@ -957,7 +957,7 @@ def download_fund_data
       rate_s = i / (Time.now() - time_start)
       remain_s = (i_total - i) / rate_s
       remain_m = remain_s/60
-      puts "Fund downloads completed: " + n_fund.to_s() + '/' + n_fund_total.to_s()
+      puts "Fund downloads completed: " + i.to_s() + '/' + i_total.to_s()
       puts "Minutes remaining: " + remain_m.to_s()
     end
   end
