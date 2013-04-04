@@ -227,7 +227,8 @@ class FundDatabase
     command_create += 'min_inv int,	'
     command_create += 'turnover float,	'
     command_create += 'biggest_position float,	'
-    command_create += 'assets float	'
+    command_create += 'assets float,	'
+    command_create += 'PRIMARY KEY (symbol)	'
     command_create += ');'
     @conn.exec(command_create);
   end
@@ -251,14 +252,25 @@ class FundDatabase
     @conn.exec_prepared("insert_fund", [index, symbol, name, type, obj])
   end
   
+  # Get index from table
+  def scrollSymbolsFromTable
+    str1 = "SELECT symbol FROM funds"
+    @conn.exec(str1) do |result|
+      result.each do |row|
+        yield row if block_given?
+      end
+    end
+  end
+  
   # Get symbol from table
-  def getSymbolFromTable
-    #@conn.exec( "SELECT symbol FROM funds" ) do |result|
+  #def getSymbolFromTable (n_index)
+    #str1 = "SELECT symbol FROM funds WHERE index=" + n_index.to_s()
+    #@conn.exec(str1) do |result|
       #result.each do |row|
         #yield row if block_given?
       #end
     #end
-  end
+  #end
   
   # Get our data back
   #def queryFundTable
@@ -911,74 +923,48 @@ def download_fund_data
   get_db_params
   fd = FundDatabase.new()
   fd.connect
-
+  i = 0 # Number of rows completed
+  
+  # Getting the number of funds from the table (i_total)
+  # This is EXTREMELY crude, but it works.
+  # I could not figure out how to extract the number of rows
+  # with Postgres commands in Ruby.
+  fd.scrollSymbolsFromTable do |row|
+    symbol_local = row['symbol']
+    i +=1
+  end
+  i_total = i
+  
+  i = 0 # Number of rows completed
   time_start = Time.now()
+  fd.scrollSymbolsFromTable do |row|
+    symbol_local = row['symbol']
+
+    url1 = url_fund_profile symbol_local
+    url2 = url_fund_holdings symbol_local
+    url3 = url_fund_price symbol_local
+    dir_fund = $dir_downloads + '/' + symbol_local
+    file1 = dir_fund + '/profile.html'
+    file2 = dir_fund + '/holdings.html'
+    file3 = dir_fund + '/quote.csv'
+    create_dir dir_fund
+    download_file url1, file1, 160
+    download_file url2, file2, 160
+    download_price symbol_local
+
+    i +=1
+    if rand < 0.01 || i==10
+      rate_s = i / (Time.now() - time_start)
+      remain_s = (i_total - i) / rate_s
+      remain_m = remain_s/60
+      puts "Fund downloads completed: " + n_fund.to_s() + '/' + n_fund_total.to_s()
+      puts "Minutes remaining: " + remain_m.to_s()
+    end
+  end
   
-  fd.getSymbolFromTable{|row| printf("%d %s\n", row['index'], row['symbol'])}
-  
-
-#p.queryUserTable do |row|
-  #my_array << row['name']
-#end
-#puts my_array 
-
-
-
-  
-  #begin
-    #fd.dropFundTable
-  #rescue
-  #end
-  #fd.createFundTable
-  #fd.prepareInsertFundStatement
-  #n_funds_last = (arrayFundLocal.length) - 1
-  #for n in 0..n_funds_last
-    # NOTE: Some of the original arrays are NOT strings.
-    #fund1 = arrayFundLocal [n]
-    #symbol_local = fund1.get_symbol
-    #name_local = fund1.get_name
-    #type_local = fund1.get_type
-    #obj_local = fund1.get_obj
-    #fd.addFund n, symbol_local, name_local, type_local, obj_local
-  #end
-
-
-
-
-
-
-
-
-
-
-
-
+  puts 'FINISHED DOWNLOADING DETAILED FUND INFORMATION'
 
   
-  #n_fund = 0
-  #n_fund_total = $array_FundBasic.length
-  #$array_FundBasic.each do |i|
-    #local_symbol = i.get_symbol
-    #url1 = url_fund_profile local_symbol
-    #url2 = url_fund_holdings local_symbol
-    #url3 = url_fund_price local_symbol
-    #dir_fund = $dir_downloads + '/' + local_symbol
-    #file1 = dir_fund + '/profile.html'
-    #file2 = dir_fund + '/holdings.html'
-    #file3 = dir_fund + '/quote.csv'
-    #create_dir dir_fund
-    #download_file url1, file1, 160
-    #download_file url2, file2, 160
-    #download_price local_symbol
-    #n_fund += 1
-    #if rand < 0.01 || n_fund == 10
-      #rate_s = n_fund / (Time.now() - time_start)
-      #remain_s = (n_fund_total - n_fund) / rate_s
-      #remain_m = remain_s/60
-      #puts "Fund downloads completed: " + n_fund.to_s() + '/' + n_fund_total.to_s()
-      #puts "Minutes remaining: " + remain_m.to_s()
-    #end
-  #end
 end
 
 # Put contents of file into string
