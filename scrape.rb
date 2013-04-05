@@ -329,18 +329,39 @@ class FundDatabase
   
   # Print to CSV file
   def printCSV (filename_short)
-    csv_path = '/var/lib/postgresql/8.4/main/' + filename_short
-    puts 'Copying the database to: '
+    csv_path = $dir_output + '/' + filename_short
+    puts 'Copying the database (initial data only) to: '
     puts csv_path
-    @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
+    begin
+      @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
+    rescue
+      # Allow the server to write to a client directory
+      system ("chmod a+w " + $dir_output)
+      system ("touch " + csv_path) # Creates blank file
+      system ("chmod 755 " + $dir_output)
+      # For security reasons, end universal write access before placing
+      # the new output file in the $dir_output directory.
+      @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
+    end
+    
   end
   
   # Print to CSV file
   def printCSVmain (filename_short)
-    csv_path = '/var/lib/postgresql/8.4/main/' + filename_short
+    csv_path = $dir_output + '/' + filename_short
     puts 'Copying the database to: '
     puts csv_path
-    @conn.exec ("COPY funds TO '" + csv_path + "' With CSV HEADER;")
+    begin
+      @conn.exec ("COPY funds TO '" + csv_path + "' With CSV HEADER;")
+    rescue
+      # Allow the server to write to a client directory
+      system ("chmod a+w " + $dir_output)
+      system ("touch " + csv_path) # Creates blank file
+      system ("chmod 755 " + $dir_output)
+      # For security reasons, end universal write access before placing
+      # the new output file in the $dir_output directory.
+      @conn.exec ("COPY funds TO '" + csv_path + "' With CSV HEADER;")
+    end
   end
   
 end
@@ -749,7 +770,7 @@ def fillDatabaseFundLong
   end
   puts "Finished writing fund data to database"
   
-  fd.printCSV('fundlist.csv') if $is_devel # Export database to CSV
+  fd.printCSV('fundlist.csv') # Export database to CSV
   fd.disconnect
    
 end
@@ -1503,7 +1524,7 @@ def get_fund_details
     end
   end
   puts 'FINISHED SCRAPING DETAILED FUND INFORMATION'
-  fd.printCSVmain('profile_all.csv') if $is_devel # Export database to CSV
+  fd.printCSVmain('profile_all.csv') # Export database to CSV
   fd.copyFundTable
   fd.disconnect
 end
