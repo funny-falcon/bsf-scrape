@@ -291,6 +291,11 @@ class FundDatabase
     @conn.exec("DROP TABLE funds_new")
   end
   
+  def copyFundTable
+    str1 = "CREATE TABLE funds AS SELECT * FROM funds_new"
+    @conn.exec(str1)
+  end
+  
   # Prepared statements prevent SQL injection attacks.  However, for the connection, the prepared statements
   # live and apparently cannot be removed, at least not very easily.  There is apparently a significant
   # performance improvement using prepared statements.
