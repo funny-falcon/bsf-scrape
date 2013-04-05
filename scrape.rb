@@ -334,6 +334,7 @@ class FundDatabase
     puts csv_path
     begin
       @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
+      system ("chmod 755 " + $dir_output)
     rescue
       # Allow the server to write to a client directory
       system ("chmod a+w " + $dir_output)
@@ -1251,7 +1252,7 @@ def scrape_stylebox (symbol_local)
   when 9
     output_array = [str_small, str_growth]
   else
-    output_array = ['N/A', 'N/A']
+    output_array = ['NULL', 'NULL']
   end
   return output_array
 end
