@@ -337,10 +337,12 @@ class FundDatabase
     rescue
       # Allow the server to write to a client directory
       system ("chmod a+w " + $dir_output)
-      system ("touch " + csv_path) # Creates blank file
+      @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
       system ("chmod 755 " + $dir_output)
-      # For security reasons, end universal write access before placing
-      # the new output file in the $dir_output directory.
+      # For security reasons, end universal write access.
+      # The Postgres superuser still has write access to the output file.
+      # For good measure, we'll repeat the copy procedure just in case
+      # (however unlikely) the old file was altered.
       @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
     end
     
@@ -352,14 +354,16 @@ class FundDatabase
     puts 'Copying the database to: '
     puts csv_path
     begin
-      @conn.exec ("COPY funds TO '" + csv_path + "' With CSV HEADER;")
+      @conn.exec("COPY funds TO '" + csv_path + "' With CSV HEADER;")
     rescue
       # Allow the server to write to a client directory
       system ("chmod a+w " + $dir_output)
-      system ("touch " + csv_path) # Creates blank file
+      @conn.exec ("COPY funds TO '" + csv_path + "' With CSV HEADER;")
       system ("chmod 755 " + $dir_output)
-      # For security reasons, end universal write access before placing
-      # the new output file in the $dir_output directory.
+      # For security reasons, end universal write access.
+      # The Postgres superuser still has write access to the output file.
+      # For good measure, we'll repeat the copy procedure just in case
+      # (however unlikely) the old file was altered.
       @conn.exec ("COPY funds TO '" + csv_path + "' With CSV HEADER;")
     end
   end
@@ -1528,10 +1532,6 @@ def get_fund_details
   fd.copyFundTable
   fd.disconnect
 end
-
-
-
-
 
 ###############
 # MAIN FUNCTION
