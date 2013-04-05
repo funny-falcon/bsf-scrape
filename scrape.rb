@@ -269,18 +269,18 @@ class FundDatabase
     command_create += "family='" + family + "',"
     command_create += "style_size='" + style_size + "',"
     command_create += "style_value='" + style_value + "',"
-    command_create += "price='" + price + "',"
-    command_create += "pcf='" + pcf + "',"
-    command_create += "pb='" + pb + "',"
-    command_create += "pe='" + pe + "',"
-    command_create += "ps='" + ps + "',"
-    command_create += "expense_ratio='" + expense_ratio + "',"
-    command_create += "load_front='" + load_front + "',"
-    command_create += "load_back='" + load_back + "',"
-    command_create += "min_inv='" + min_inv + "',"
-    command_create += "turnover='" + turnover + "',"
-    command_create += "biggest_position='" + biggest_position + "',"
-    command_create += "assets='" + assets + "'"
+    command_create += "price=" + price + ","
+    command_create += "pcf=" + pcf + ","
+    command_create += "pb=" + pb + ","
+    command_create += "pe=" + pe + ","
+    command_create += "ps=" + ps + ","
+    command_create += "expense_ratio=" + expense_ratio + ","
+    command_create += "load_front=" + load_front + ","
+    command_create += "load_back=" + load_back + ","
+    command_create += "min_inv=" + min_inv + ","
+    command_create += "turnover=" + turnover + ","
+    command_create += "biggest_position=" + biggest_position + ","
+    command_create += "assets='" + assets + "' "
     command_create += "WHERE symbol='" + symbol + "'"
     command_create += ";"
     @conn.exec(command_create);
@@ -826,6 +826,61 @@ def fillDatabaseFundShort
   type_array << 'UIT'
   obj_array << ''
   
+  symbol_array << 'CSVWX'
+  name_array << ''
+  type_array << 'Open-End Fund'
+  obj_array << ''
+  
+  symbol_array << 'LSMBX'
+  name_array << ''
+  type_array << 'Open-End Fund'
+  obj_array << ''
+
+  symbol_array << 'IDHVF'
+  name_array << ''
+  type_array << 'Open-End Fund'
+  obj_array << ''
+
+  symbol_array << 'EWU'
+  name_array << ''
+  type_array << 'ETF'
+  obj_array << ''
+
+  symbol_array << 'EWVS'
+  name_array << ''
+  type_array << 'ETF'
+  obj_array << ''
+
+  symbol_array << 'AIA'
+  name_array << ''
+  type_array << 'ETF'
+  obj_array << ''
+
+  symbol_array << 'JCVWX'
+  name_array << ''
+  type_array << 'Open-End Fund'
+  obj_array << ''
+
+  symbol_array << 'JGYIX'
+  name_array << ''
+  type_array << 'Open-End Fund'
+  obj_array << ''
+
+  symbol_array << 'VICFX'
+  name_array << ''
+  type_array << 'Open-End Fund'
+  obj_array << ''
+
+  symbol_array << 'VEIAX'
+  name_array << ''
+  type_array << 'Open-End Fund'
+  obj_array << ''
+
+  symbol_array << 'A1A'
+  name_array << ''
+  type_array << 'ETF'
+  obj_array << ''
+  
   # Screen out funds not compatible with the mission of Bargain Stock Funds
   # Fill array with remaining funds
   n_array_last = symbol_array.length - 1
@@ -1010,6 +1065,7 @@ def download_fund_data
   puts 'FINISHED DOWNLOADING DETAILED FUND INFORMATION'
 end
 
+# OUTPUT: float
 def percent_to_num (string_local)
   begin
     string_local.slice! '%'
@@ -1020,6 +1076,7 @@ def percent_to_num (string_local)
   end
 end
 
+#OUTPUT: float
 def str_to_num (string_local)
   begin
     return Float (string_local)
@@ -1028,6 +1085,7 @@ def str_to_num (string_local)
   end
 end
 
+# OUTPUT: int
 def str_to_int (string_local)
   string_local = string_local.gsub(",", "")
   begin
@@ -1037,6 +1095,7 @@ def str_to_int (string_local)
   end
 end
 
+# OUTPUT: 0.0
 def nil_to_0 (num_local)
   if num_local.nil?
     return 0.0
@@ -1045,7 +1104,7 @@ def nil_to_0 (num_local)
   end
 end
 
-
+# OUTPUT: string
 def scrape_cat_mf (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
   page = Nokogiri::HTML(open(filename))
@@ -1055,6 +1114,7 @@ def scrape_cat_mf (symbol_local)
   return scrape
 end
 
+# OUTPUT: string
 def scrape_cat_etf (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
   page = Nokogiri::HTML(open(filename))
@@ -1064,6 +1124,7 @@ def scrape_cat_etf (symbol_local)
   return scrape
 end
 
+# OUTPUT: string
 def scrape_cat (symbol_local)
   output = scrape_cat_mf (symbol_local)
   if output == ''
@@ -1072,6 +1133,7 @@ def scrape_cat (symbol_local)
   return output
 end
 
+# OUTPUT: string
 def scrape_fam (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
   page = Nokogiri::HTML(open(filename))
@@ -1081,6 +1143,7 @@ def scrape_fam (symbol_local)
   return scrape
 end
 
+# OUTPUT: string
 def scrape_assets (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
   page = Nokogiri::HTML(open(filename))
@@ -1090,13 +1153,14 @@ def scrape_assets (symbol_local)
   return scrape
 end
 
-
+# OUTPUT: string
 def url_stylebox (num)
   str_output = 'http://us.i1.yimg.com/us.yimg.com/i/fi/3_0stylelargeeq'
   str_output += (num.to_s() + '.gif')
   return str_output
 end
 
+# OUTPUT: 2-element array
 def scrape_stylebox (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
   page = Nokogiri::HTML(open(filename))
@@ -1147,16 +1211,19 @@ def scrape_stylebox (symbol_local)
   return output_array
 end
 
+# OUTPUT: string
 def scrape_style_size (symbol_local)
   get_array = scrape_stylebox symbol_local
   return get_array [0]
 end
 
+# OUTPUT: string
 def scrape_style_value (symbol_local)
   get_array = scrape_stylebox symbol_local
   return get_array [1]
 end
 
+# OUTPUT: int
 def scrape_mininv (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
   page = Nokogiri::HTML(open(filename))
@@ -1169,7 +1236,7 @@ def scrape_mininv (symbol_local)
   return scrape
 end
 
-
+# OUTPUT: float
 def scrape_turnover (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
   page = Nokogiri::HTML(open(filename))
@@ -1179,6 +1246,7 @@ def scrape_turnover (symbol_local)
   return percent_to_num scrape
 end
 
+# OUTPUT: float
 def scrape_exp_gross (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
   page = Nokogiri::HTML(open(filename))
@@ -1188,6 +1256,7 @@ def scrape_exp_gross (symbol_local)
   return percent_to_num scrape
 end
 
+# OUTPUT: float
 def scrape_exp_net (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
   page = Nokogiri::HTML(open(filename))
@@ -1197,6 +1266,7 @@ def scrape_exp_net (symbol_local)
   return percent_to_num scrape
 end
 
+# OUTPUT: float
 def scrape_exp (symbol_local)
   exp_local = scrape_exp_gross symbol_local
   if exp_local.nil?
@@ -1205,6 +1275,7 @@ def scrape_exp (symbol_local)
   return exp_local
 end
 
+# OUTPUT: float
 def scrape_load_front (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
   page = Nokogiri::HTML(open(filename))
@@ -1216,6 +1287,7 @@ def scrape_load_front (symbol_local)
   return output
 end
 
+# OUTPUT: float
 def scrape_load_back (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
   page = Nokogiri::HTML(open(filename))
@@ -1227,6 +1299,7 @@ def scrape_load_back (symbol_local)
   return output
 end
 
+# OUTPUT: float
 def scrape_price_orig (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
   page = Nokogiri::HTML(open(filename))
@@ -1236,6 +1309,7 @@ def scrape_price_orig (symbol_local)
   return str_to_num scrape
 end
 
+# OUTPUT: float
 def scrape_pb_orig (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
   page = Nokogiri::HTML(open(filename))
@@ -1245,6 +1319,7 @@ def scrape_pb_orig (symbol_local)
   return str_to_num scrape
 end
 
+# OUTPUT: float
 def scrape_pe_orig (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
   page = Nokogiri::HTML(open(filename))
@@ -1254,6 +1329,7 @@ def scrape_pe_orig (symbol_local)
   return str_to_num scrape
 end
 
+# OUTPUT: float
 def scrape_pcf_orig (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
   page = Nokogiri::HTML(open(filename))
@@ -1263,6 +1339,7 @@ def scrape_pcf_orig (symbol_local)
   return str_to_num scrape
 end
 
+# OUTPUT: float
 def scrape_ps_orig (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
   page = Nokogiri::HTML(open(filename))
@@ -1272,6 +1349,7 @@ def scrape_ps_orig (symbol_local)
   return str_to_num scrape
 end
 
+# OUTPUT: float
 def scrape_biggest (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
   page = Nokogiri::HTML(open(filename))
@@ -1282,6 +1360,7 @@ def scrape_biggest (symbol_local)
   return str_to_num scrape
 end
 
+# OUTPUT: float
 def scrape_price_now (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/quote.csv'
   price_string = ''
@@ -1293,6 +1372,7 @@ def scrape_price_now (symbol_local)
   return output
 end
 
+# OUTPUT: float
 def scrape_pcf_now (symbol_local)
   p2 = scrape_price_now symbol_local
   p1 = scrape_price_orig symbol_local
@@ -1304,6 +1384,7 @@ def scrape_pcf_now (symbol_local)
   end
 end
 
+# OUTPUT: float
 def scrape_pb_now (symbol_local)
   p2 = scrape_price_now symbol_local
   p1 = scrape_price_orig symbol_local
@@ -1315,6 +1396,7 @@ def scrape_pb_now (symbol_local)
   end
 end
 
+# OUTPUT: float
 def scrape_pe_now (symbol_local)
   p2 = scrape_price_now symbol_local
   p1 = scrape_price_orig symbol_local
@@ -1326,6 +1408,7 @@ def scrape_pe_now (symbol_local)
   end
 end
 
+# OUTPUT: float
 def scrape_ps_now (symbol_local)
   p2 = scrape_price_now symbol_local
   p1 = scrape_price_orig symbol_local
@@ -1337,7 +1420,16 @@ def scrape_ps_now (symbol_local)
   end
 end
 
-
+# OUTPUT: string
+# Converts blanks and nils to NULL
+def something_to_s (input)
+  str_input = input.to_s()
+  str_output = str_input
+  if str_input == 'nil' || str_input == ''
+    str_output = 'NULL'
+  end
+  return str_output
+end
 
 def get_fund_details
   puts 'SCRAPING FUND DETAILS FROM DOWNLOADED PAGES'
@@ -1354,22 +1446,22 @@ def get_fund_details
     file1 = dir_fund + '/profile.html'
     file2 = dir_fund + '/holdings.html'
     file3 = dir_fund + '/quote.csv'
-    category = scrape_cat symbol
-    family = scrape_fam symbol
-    assets = scrape_assets symbol
-    style_size = scrape_style_size symbol
-    style_value = scrape_style_value symbol
-    min_inv = (scrape_mininv symbol).to_s()
-    expense_ratio = (scrape_exp symbol).to_s()
-    turnover = (scrape_turnover symbol).to_s()
-    load_front = (scrape_load_front symbol).to_s()
-    load_back = (scrape_load_back symbol).to_s()
-    biggest_position = (scrape_biggest symbol).to_s()
-    price = (scrape_price_now symbol).to_s()
-    pe = (scrape_pe_now symbol).to_s()
-    pb = (scrape_pb_now symbol).to_s()
-    ps = (scrape_ps_now symbol).to_s()
-    pcf = (scrape_pcf_now symbol).to_s()
+    category = something_to_s(scrape_cat symbol)
+    family = something_to_s(scrape_fam symbol)
+    assets = something_to_s(scrape_assets symbol)
+    style_size = something_to_s(scrape_style_size symbol)
+    style_value = something_to_s(scrape_style_value symbol)
+    min_inv = something_to_s(scrape_mininv symbol)
+    expense_ratio = something_to_s(scrape_exp symbol)
+    turnover = something_to_s(scrape_turnover symbol)
+    load_front = something_to_s(scrape_load_front symbol)
+    load_back = something_to_s(scrape_load_back symbol)
+    biggest_position = something_to_s(scrape_biggest symbol)
+    price = something_to_s(scrape_price_now symbol)
+    pe = something_to_s(scrape_pe_now symbol)
+    pb = something_to_s(scrape_pb_now symbol)
+    ps = something_to_s(scrape_ps_now symbol)
+    pcf = something_to_s(scrape_pcf_now symbol)
     array_details = Array.new
     array_details << symbol << category << family 
     array_details << style_size << style_value << price
@@ -1381,47 +1473,16 @@ def get_fund_details
     # min_inv, turnover, biggest_position, assets]
     # NOTE: All inputs must be strings.
     fd.updateFund array_details    
-    
-    
-    
-        #fund1 = arrayFundLocal [n]
-    #symbol_local = fund1.get_symbol
-    #name_local = fund1.get_name
-    #type_local = fund1.get_type
-    #obj_local = fund1.get_obj
-    #fd.addFund n, symbol_local, name_local, type_local, obj_local
-
-    
-    #command_create += 'UPDATE funds_new WHERE symbol=' 
-    #command_create += local_symbol + ' '
-    #command_create += 'SET family=' + family + ','
-    #command_create += 'style_size=' + style_size + ','
-    #command_create += 'style_value=' + style_value + ','
-    #command_create += 'price float=' + price float + ','
-    #command_create += 'pcf float=' + pcf float + ','
-    #command_create += 'pb float=' + pb float + ','
-    #command_create += 'pe float=' + pe float + ','
-    #command_create += 'ps float=' + ps float + ','
-    #command_create += 'expense_ratio=' + expense_ratio + ','
-    #command_create += 'load_front=' + load_front + ','
-    #command_create += 'load_back=' + load_back + ','
-    #command_create += 'min_inv=' + min_inv + ','
-    #command_create += 'turnover=' + turnover + ','
-    #command_create += 'biggest_position=' + biggest_position + ','
-    #command_create += 'assets=' + assets
-    #command_create += ';'
-
-
     i += 1
     if rand < 0.01 || i==10
       rate_s = i / (Time.now() - time_start)
-      remain_s = (i_total - i) / rate_s
+      remain_s = ($num_funds_total - i) / rate_s
       remain_m = remain_s/60
-      puts "Fund downloads completed: " + i.to_s() + '/' + i_total.to_s()
+      puts "Fund data scraping completed: " + i.to_s() + '/' + $num_funds_total.to_s()
       puts "Minutes remaining: " + remain_m.to_s()
     end
   end
-  puts 'FINISHED DOWNLOADING DETAILED FUND INFORMATION'
+  puts 'FINISHED SCRAPING DETAILED FUND INFORMATION'
   fd.printCSV('profile_all.csv') # Export database to CSV
   fd.disconnect
 end
