@@ -42,6 +42,9 @@ $len_stylebox = 0
 # Array of funds
 $arrayFund = []
 
+# Number of funds
+$num_funds_total = 0
+
 # Postgres database information
 $db_name = ''
 $db_user = ''
@@ -215,7 +218,7 @@ class FundDatabase
     command_create += 'objective varchar(' + $len_obj.to_s() + '),	'
     command_create += 'category varchar(100),	'
     command_create += 'family varchar(100),	'
-    command_create += 'style_size varchar(5),	'
+    command_create += 'style_size varchar(6),	'
     command_create += 'style_value varchar(6),	'
     command_create += 'price float,	'
     command_create += 'pcf float,	'
@@ -226,11 +229,60 @@ class FundDatabase
     command_create += 'load_front float,	'
     command_create += 'load_back float,	'
     command_create += 'min_inv int,	'
-    command_create += 'turnover float,	'
+    command_create += 'turnover varchar (6),	'
     command_create += 'biggest_position float,	'
-    command_create += 'assets float,	'
+    command_create += 'assets varchar(10),	'
     command_create += 'PRIMARY KEY (symbol)	'
     command_create += ');'
+    @conn.exec(command_create);
+  end
+  
+  # Update our table of fund data
+  def updateFund (array_details)
+    # array_details = [symbol, category, family, style_size, style_value, 
+    # price, pcf, pb, pe, ps, expense_ratio, load_front, load_back, 
+    # min_inv, turnover, biggest_position, assets]
+    # NOTE: All inputs must be strings.
+    symbol = array_details [0]
+    category = array_details [1]
+    family = array_details [2]
+    style_size = array_details [3]
+    style_value = array_details [4]
+    price = array_details [5]
+    pcf = array_details [6]
+    pb = array_details [7]
+    pe = array_details [8]
+    ps = array_details [9]
+    expense_ratio = array_details [10]
+    load_front = array_details [11]
+    load_back = array_details [12]
+    min_inv = array_details [13]
+    turnover = array_details [14]
+    biggest_position = array_details [15]
+    assets = array_details [16]
+    
+    command_create = ""
+    #command_create += 'UPDATE funds_new WHERE symbol=' 
+    #command_create += symbol + ' '
+    command_create += "UPDATE funds_new "
+    command_create += "SET category='" + category + "',"
+    command_create += "family='" + family + "',"
+    command_create += "style_size='" + style_size + "',"
+    command_create += "style_value='" + style_value + "',"
+    command_create += "price='" + price + "',"
+    command_create += "pcf='" + pcf + "',"
+    command_create += "pb='" + pb + "',"
+    command_create += "pe='" + pe + "',"
+    command_create += "ps='" + ps + "',"
+    command_create += "expense_ratio='" + expense_ratio + "',"
+    command_create += "load_front='" + load_front + "',"
+    command_create += "load_back='" + load_back + "',"
+    command_create += "min_inv='" + min_inv + "',"
+    command_create += "turnover='" + turnover + "',"
+    command_create += "biggest_position='" + biggest_position + "',"
+    command_create += "assets='" + assets + "'"
+    command_create += "WHERE symbol='" + symbol + "'"
+    command_create += ";"
     @conn.exec(command_create);
   end
   
@@ -350,21 +402,15 @@ def get_env
   $dir_scrape = $dir_home + '/bsf-scrape'
   $is_devel = Dir.exists? $dir_scrape
   $username = username
-  #$db_name = 'pg_bsf' # Both development and production environments
   if ($is_devel == true)
     puts
     puts 'Environment: DEVELOPMENT'
-    #$db_user = username
-    #$db_password = '' # Password not needed in development environment
+
   else
     $dir_scrape = '/home/doppler/webapps'
     $dir_scrape += '/bsf_scrape/bsf-scrape'
     puts
     puts 'Environment: PRODUCTION'
-    #file_username = $dir_db + '/.username.txt'
-    #$db_user = string_from_file file_username
-    #file_password = $dir_db + '/.password.txt'
-    #$db_password = string_from_file file_password
   end
 end
 
@@ -933,7 +979,7 @@ def download_fund_data
     symbol_local = row['symbol']
     i +=1
   end
-  i_total = i
+  $num_funds_total = i
   
   i = 0 # Number of rows completed
   time_start = Time.now()
@@ -955,89 +1001,433 @@ def download_fund_data
     i +=1
     if rand < 0.01 || i==10
       rate_s = i / (Time.now() - time_start)
+      remain_s = ($num_funds_total - i) / rate_s
+      remain_m = remain_s/60
+      puts "Fund downloads completed: " + i.to_s() + '/' + $num_funds_total.to_s()
+      puts "Minutes remaining: " + remain_m.to_s()
+    end
+  end
+  puts 'FINISHED DOWNLOADING DETAILED FUND INFORMATION'
+end
+
+def percent_to_num (string_local)
+  begin
+    string_local.slice! '%'
+    num = Float(string_local)
+    return num
+  rescue
+    return nil
+  end
+end
+
+def str_to_num (string_local)
+  begin
+    return Float (string_local)
+  rescue
+    return nil
+  end
+end
+
+def str_to_int (string_local)
+  string_local = string_local.gsub(",", "")
+  begin
+    return Integer (string_local)
+  rescue
+    return nil
+  end
+end
+
+def nil_to_0 (num_local)
+  if num_local.nil?
+    return 0.0
+  else
+    return num_local
+  end
+end
+
+
+def scrape_cat_mf (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/profile.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[1][td[contains (text(), "Category:")]]//td[2]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return scrape
+end
+
+def scrape_cat_etf (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/profile.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Category:")]]//td[2]//a/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return scrape
+end
+
+def scrape_cat (symbol_local)
+  output = scrape_cat_mf (symbol_local)
+  if output == ''
+    output = scrape_cat_etf (symbol_local)
+  end
+  return output
+end
+
+def scrape_fam (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/profile.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Fund Family:")]]//td[2]//a/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return scrape
+end
+
+def scrape_assets (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/profile.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Net Assets:")]]//td[2]//text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return scrape
+end
+
+
+def url_stylebox (num)
+  str_output = 'http://us.i1.yimg.com/us.yimg.com/i/fi/3_0stylelargeeq'
+  str_output += (num.to_s() + '.gif')
+  return str_output
+end
+
+def scrape_stylebox (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/profile.html'
+  page = Nokogiri::HTML(open(filename))
+  i = 0
+  i_found = 0
+  style_found = false
+  while !style_found && i <= 10 
+    # Determine if url_stylebox(i) is within filename
+    is_here = false
+    File.open(filename) do |io|
+      io.each {|line| line.chomp!;is_here = true if line.include? url_stylebox(i)}
+    end
+    if is_here
+      style_found = true
+      i_found = i
+    end
+    i += 1
+  end
+  output_array = Array.new
+  str_small = 'Small'
+  str_med = 'Medium'
+  str_large = 'Large'
+  str_value = 'Value'
+  str_blend = 'Blend'
+  str_growth = 'Growth'
+  case i_found
+  when 1
+    output_array = [str_large, str_value]
+  when 2
+    output_array = [str_large, str_blend]
+  when 3
+    output_array = [str_large, str_growth]
+  when 4
+    output_array = [str_med, str_value]
+  when 5
+    output_array = [str_med, str_blend]
+  when 6
+    output_array = [str_med, str_growth]
+  when 7
+    output_array = [str_small, str_value]
+  when 8
+    output_array = [str_small, str_blend]
+  when 9
+    output_array = [str_small, str_growth]
+  else
+    output_array = ['N/A', 'N/A']
+  end
+  return output_array
+end
+
+def scrape_style_size (symbol_local)
+  get_array = scrape_stylebox symbol_local
+  return get_array [0]
+end
+
+def scrape_style_value (symbol_local)
+  get_array = scrape_stylebox symbol_local
+  return get_array [1]
+end
+
+def scrape_mininv (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/profile.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Min Initial Investment:")]]//td[2]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  scrape = str_to_int scrape
+  scrape = nil_to_0 scrape
+  scrape = Integer (scrape)
+  return scrape
+end
+
+
+def scrape_turnover (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/profile.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Annual Holdings Turnover")]]//td[2]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return percent_to_num scrape
+end
+
+def scrape_exp_gross (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/profile.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Prospectus Gross Expense Ratio")]]//td[2]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return percent_to_num scrape
+end
+
+def scrape_exp_net (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/profile.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Annual Report Expense Ratio (net)")]]//td[2]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return percent_to_num scrape
+end
+
+def scrape_exp (symbol_local)
+  exp_local = scrape_exp_gross symbol_local
+  if exp_local.nil?
+    exp_local = scrape_exp_net symbol_local
+  end
+  return exp_local
+end
+
+def scrape_load_front (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/profile.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Max Front End Sales Load")]]//td[2]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  scrape1 = percent_to_num scrape
+  output = nil_to_0 scrape1
+  return output
+end
+
+def scrape_load_back (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/profile.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Max Deferred Sales Load")]]//td[2]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  scrape1 = percent_to_num scrape
+  output = nil_to_0 scrape1
+  return output
+end
+
+def scrape_price_orig (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/span[contains (@class, "time_rtq_ticker")]/span/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return str_to_num scrape
+end
+
+def scrape_pb_orig (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Price/Book")]]/td[2]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return str_to_num scrape
+end
+
+def scrape_pe_orig (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Price/Earnings")]]/td[2]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return str_to_num scrape
+end
+
+def scrape_pcf_orig (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Price/Cashflow")]]/td[2]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return str_to_num scrape
+end
+
+def scrape_ps_orig (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/tr[td[contains (text(), "Price/Sales")]]/td[2]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return str_to_num scrape
+end
+
+def scrape_biggest (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/holdings.html'
+  page = Nokogiri::HTML(open(filename))
+  string_xpath = './/table[tr[th[contains (text(), "Top 10 Holdings")]]]'
+  string_xpath += '/following-sibling::table[1]/tr/td/table/tr[2]/td[3]/text()'
+  scrape = page.xpath (string_xpath)
+  scrape = scrape.to_s()
+  return str_to_num scrape
+end
+
+def scrape_price_now (symbol_local)
+  filename = $dir_downloads + '/' + symbol_local + '/quote.csv'
+  price_string = ''
+  f = File.open(filename, "r")
+  f.each_line do |line|
+    price_string += line
+  end
+  output = str_to_num price_string
+  return output
+end
+
+def scrape_pcf_now (symbol_local)
+  p2 = scrape_price_now symbol_local
+  p1 = scrape_price_orig symbol_local
+  ratio = scrape_pcf_orig symbol_local
+  begin
+    return (p2/p1) * ratio
+  rescue
+    return nil
+  end
+end
+
+def scrape_pb_now (symbol_local)
+  p2 = scrape_price_now symbol_local
+  p1 = scrape_price_orig symbol_local
+  ratio = scrape_pb_orig symbol_local
+  begin
+    return (p2/p1) * ratio
+  rescue
+    return nil
+  end
+end
+
+def scrape_pe_now (symbol_local)
+  p2 = scrape_price_now symbol_local
+  p1 = scrape_price_orig symbol_local
+  ratio = scrape_pe_orig symbol_local
+  begin
+    return (p2/p1) * ratio
+  rescue
+    return nil
+  end
+end
+
+def scrape_ps_now (symbol_local)
+  p2 = scrape_price_now symbol_local
+  p1 = scrape_price_orig symbol_local
+  ratio = scrape_ps_orig symbol_local
+  begin
+    return (p2/p1) * ratio
+  rescue
+    return nil
+  end
+end
+
+
+
+def get_fund_details
+  puts 'SCRAPING FUND DETAILS FROM DOWNLOADED PAGES'
+  
+  # Start the database  
+  fd = FundDatabase.new()
+  fd.connect
+  i = 0 # Number of rows completed
+  
+  time_start = Time.now()
+  fd.scrollSymbolsFromTable do |row|
+    symbol= row['symbol']
+    dir_fund = $dir_downloads + '/' + symbol
+    file1 = dir_fund + '/profile.html'
+    file2 = dir_fund + '/holdings.html'
+    file3 = dir_fund + '/quote.csv'
+    category = scrape_cat symbol
+    family = scrape_fam symbol
+    assets = scrape_assets symbol
+    style_size = scrape_style_size symbol
+    style_value = scrape_style_value symbol
+    min_inv = (scrape_mininv symbol).to_s()
+    expense_ratio = (scrape_exp symbol).to_s()
+    turnover = (scrape_turnover symbol).to_s()
+    load_front = (scrape_load_front symbol).to_s()
+    load_back = (scrape_load_back symbol).to_s()
+    biggest_position = (scrape_biggest symbol).to_s()
+    price = (scrape_price_now symbol).to_s()
+    pe = (scrape_pe_now symbol).to_s()
+    pb = (scrape_pb_now symbol).to_s()
+    ps = (scrape_ps_now symbol).to_s()
+    pcf = (scrape_pcf_now symbol).to_s()
+    array_details = Array.new
+    array_details << symbol << category << family 
+    array_details << style_size << style_value << price
+    array_details << pcf << pb << pe << ps << expense_ratio
+    array_details << load_front << load_back << min_inv
+    array_details << turnover << biggest_position << assets
+    # array_details = [symbol, category, family, style_size, style_value, 
+    # price, pcf, pb, pe, ps, expense_ratio, load_front, load_back, 
+    # min_inv, turnover, biggest_position, assets]
+    # NOTE: All inputs must be strings.
+    fd.updateFund array_details    
+    
+    
+    
+        #fund1 = arrayFundLocal [n]
+    #symbol_local = fund1.get_symbol
+    #name_local = fund1.get_name
+    #type_local = fund1.get_type
+    #obj_local = fund1.get_obj
+    #fd.addFund n, symbol_local, name_local, type_local, obj_local
+
+    
+    #command_create += 'UPDATE funds_new WHERE symbol=' 
+    #command_create += local_symbol + ' '
+    #command_create += 'SET family=' + family + ','
+    #command_create += 'style_size=' + style_size + ','
+    #command_create += 'style_value=' + style_value + ','
+    #command_create += 'price float=' + price float + ','
+    #command_create += 'pcf float=' + pcf float + ','
+    #command_create += 'pb float=' + pb float + ','
+    #command_create += 'pe float=' + pe float + ','
+    #command_create += 'ps float=' + ps float + ','
+    #command_create += 'expense_ratio=' + expense_ratio + ','
+    #command_create += 'load_front=' + load_front + ','
+    #command_create += 'load_back=' + load_back + ','
+    #command_create += 'min_inv=' + min_inv + ','
+    #command_create += 'turnover=' + turnover + ','
+    #command_create += 'biggest_position=' + biggest_position + ','
+    #command_create += 'assets=' + assets
+    #command_create += ';'
+
+
+    i += 1
+    if rand < 0.01 || i==10
+      rate_s = i / (Time.now() - time_start)
       remain_s = (i_total - i) / rate_s
       remain_m = remain_s/60
       puts "Fund downloads completed: " + i.to_s() + '/' + i_total.to_s()
       puts "Minutes remaining: " + remain_m.to_s()
     end
   end
-  
   puts 'FINISHED DOWNLOADING DETAILED FUND INFORMATION'
-
-  
+  fd.printCSV('profile_all.csv') # Export database to CSV
+  fd.disconnect
 end
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#######################
-# GET DATABASE PASSWORD
-#######################
 
 
 ###############
@@ -1055,7 +1445,7 @@ def main
     fillDatabaseFundShort
   end
   download_fund_data
-  
+  get_fund_details
 end
 
 main
