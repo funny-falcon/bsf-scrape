@@ -1483,7 +1483,7 @@ def get_fund_details
     end
   end
   puts 'FINISHED SCRAPING DETAILED FUND INFORMATION'
-  fd.printCSV('profile_all.csv') # Export database to CSV
+  fd.printCSV('profile_all.csv') if $is_devel # Export database to CSV
   fd.disconnect
 end
 
