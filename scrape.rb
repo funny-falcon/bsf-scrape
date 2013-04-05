@@ -770,7 +770,7 @@ def fillDatabaseFundLong
   end
   puts "Finished writing fund data to database"
   
-  fd.printCSV('fundlist.csv') # Export database to CSV
+  fd.printCSV('fundlist.csv') if $is_devel == true # Export database to CSV
   fd.disconnect
    
 end
@@ -1524,7 +1524,7 @@ def get_fund_details
     end
   end
   puts 'FINISHED SCRAPING DETAILED FUND INFORMATION'
-  fd.printCSVmain('profile_all.csv') # Export database to CSV
+  fd.printCSVmain('profile_all.csv') if $is_devel == true # Export database to CSV
   fd.copyFundTable
   fd.disconnect
 end
