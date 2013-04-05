@@ -292,8 +292,15 @@ class FundDatabase
   end
   
   def copyFundTable
-    str1 = "CREATE TABLE funds AS SELECT * FROM funds_new"
-    @conn.exec(str1)
+    str1 = "DROP TABLE funds"
+    str2 = "CREATE TABLE funds AS SELECT * FROM funds_new"
+    begin
+      @conn.exec(str2)
+    rescue
+      @conn.exec(str1)
+      @conn.exec(str2)
+    end
+    
   end
   
   # Prepared statements prevent SQL injection attacks.  However, for the connection, the prepared statements
@@ -326,6 +333,14 @@ class FundDatabase
     puts 'Copying the database to: '
     puts csv_path
     @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
+  end
+  
+  # Print to CSV file
+  def printCSVmain (filename_short)
+    csv_path = '/var/lib/postgresql/8.4/main/' + filename_short
+    puts 'Copying the database to: '
+    puts csv_path
+    @conn.exec ("COPY funds TO '" + csv_path + "' With CSV HEADER;")
   end
   
 end
@@ -1488,7 +1503,8 @@ def get_fund_details
     end
   end
   puts 'FINISHED SCRAPING DETAILED FUND INFORMATION'
-  fd.printCSV('profile_all.csv') if $is_devel # Export database to CSV
+  fd.printCSVmain('profile_all.csv') if $is_devel # Export database to CSV
+  fd.copyFundTable
   fd.disconnect
 end
 
