@@ -1409,12 +1409,18 @@ end
 # OUTPUT: float
 def scrape_price_now (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/quote.csv'
+  # NOTE: If the ticker symbol is invalid, the quote.csv file
+  # will read 0.00.
+  return nil if (scrape_price_orig symbol_local) == nil
   price_string = ''
   f = File.open(filename, "r")
   f.each_line do |line|
     price_string += line
   end
   output = str_to_num price_string
+  if price_string == ''
+    output = nil
+  end
   return output
 end
 
@@ -1514,6 +1520,7 @@ def get_fund_details
     array_details << pcf << pb << pe << ps << expense_ratio
     array_details << load_front << load_back << min_inv
     array_details << turnover << biggest_position << assets
+    
     # array_details = [symbol, category, family, style_size, style_value, 
     # price, pcf, pb, pe, ps, expense_ratio, load_front, load_back, 
     # min_inv, turnover, biggest_position, assets]
