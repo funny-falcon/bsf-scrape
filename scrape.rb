@@ -1252,7 +1252,7 @@ def scrape_stylebox (symbol_local)
   when 9
     output_array = [str_small, str_growth]
   else
-    output_array = ['NULL', 'NULL']
+    output_array = ['', '']
   end
   return output_array
 end
@@ -1477,7 +1477,7 @@ end
 def something_to_s (input)
   str_input = input.to_s()
   str_output = str_input
-  if str_input == 'nil' || str_input == ''
+  if str_input == nil || str_input = ''
     str_output = 'NULL'
   end
   return str_output
