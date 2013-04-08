@@ -1477,7 +1477,7 @@ end
 def something_to_s (input)
   str_input = input.to_s()
   str_output = str_input
-  if str_input == nil || str_input = ''
+  if str_input == nil || str_input == ''
     str_output = 'NULL'
   end
   return str_output
