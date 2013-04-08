@@ -2,7 +2,6 @@
 require 'timeout'
 require 'open-uri'
 require 'nokogiri'
-require 'csv'
 require 'pg'
 
 #############################
@@ -193,6 +192,13 @@ end
 
 # Based on the example at:
 # http://marcclifton.wordpress.com/2012/11/12/an-example-of-using-postgresql-with-ruby/
+
+# There are two tables, funds_new and funds.  funds is used directly by
+# the web site.  funds_new is the table changed in this algorithm.
+# funds_new is copied to funds AFTER the updating is complete.
+# Thus, while funds_new is in flux while this script is being executed,
+# the old data remains in place in funds.
+
 class FundDatabase 
   # Create the connection instance.
   def connect
@@ -300,7 +306,6 @@ class FundDatabase
       @conn.exec(str1)
       @conn.exec(str2)
     end
-    
   end
   
   # Prepared statements prevent SQL injection attacks.  However, for the connection, the prepared statements
@@ -326,17 +331,7 @@ class FundDatabase
       end
     end
   end
-  
-  # Get rows from table
-  def scrollRowsFromTable
-    str1 = "SELECT * FROM funds_new"
-    @conn.exec(str1) do |result|
-      result.each do |row|
-        yield row if block_given?
-      end
-    end
-  end
-  
+    
   # Print to CSV file
   def printCSV (filename_short)
     csv_path = $dir_output + '/' + filename_short
@@ -356,37 +351,13 @@ class FundDatabase
       # (however unlikely) the old file was altered.
       @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
     end
-    
-  end
-  
-  # Print to CSV file
-  def printCSVmain (filename_short)
-    csv_path = $dir_output + '/' + filename_short
-    puts 'Copying the database to: '
-    puts csv_path
-    begin
-      @conn.exec("COPY funds TO '" + csv_path + "' With CSV HEADER;")
-    rescue
-      # Allow the server to write to a client directory
-      system ("chmod a+w " + $dir_output)
-      @conn.exec ("COPY funds TO '" + csv_path + "' With CSV HEADER;")
-      system ("chmod 755 " + $dir_output)
-      # For security reasons, end universal write access.
-      # The Postgres superuser still has write access to the output file.
-      # For good measure, we'll repeat the copy procedure just in case
-      # (however unlikely) the old file was altered.
-      @conn.exec ("COPY funds TO '" + csv_path + "' With CSV HEADER;")
-    end
-  end
-  
+  end  
 end
-
 
 #############################################################
 # START WITH A DELAY OF RANDOM LENGTH OR UNTIL KEY IS PRESSED
 # WHICHEVER COMES FIRST
 #############################################################
-
 def delay
   delay_min = rand * 30
   delay_sec = delay_min * 60
@@ -489,6 +460,7 @@ def create_dir_all
   create_dir $dir_output
 end
 
+# Get database parameters
 def get_db_params
   $db_name = 'pg_bsf' # Both development and production environments
   if ($is_devel == true)
@@ -1578,10 +1550,11 @@ def fund_details
     # price, pcf, pb, pe, ps, expense_ratio, load_front, load_back, 
     # min_inv, turnover, biggest_position, assets]
     # NOTE: All inputs must be strings.
+    
     fd.updateFund array_details # Write the data to the database
     
     CSV.open(path_output_csv, "ab") do |csv| # ab: append
-      csv << array_details # Fill the the row
+      csv << array_details # Fill the row
     end
       
     i += 1
@@ -1593,11 +1566,11 @@ def fund_details
       puts "Minutes remaining: " + remain_m.to_s()
     end
   end
-  puts 'FINISHED SCRAPING DETAILED FUND INFORMATION'
-  
-  # fd.printCSVmain('profile_all.csv') if $is_devel == true # Export database to CSV
   fd.copyFundTable
   fd.disconnect
+  puts 'MISSION ACCOMPLISHED'
+  puts 'THE DATABASE AND OUTPUT CSV FILE ARE UPDATED'
+  puts
 end
 
 ###############
