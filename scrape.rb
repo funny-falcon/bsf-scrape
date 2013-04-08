@@ -317,9 +317,19 @@ class FundDatabase
     @conn.exec_prepared("insert_fund", [index, symbol, name, type, obj])
   end
   
-  # Get index from table
+  # Get symbols from table
   def scrollSymbolsFromTable
     str1 = "SELECT symbol FROM funds_new"
+    @conn.exec(str1) do |result|
+      result.each do |row|
+        yield row if block_given?
+      end
+    end
+  end
+  
+  # Get rows from table
+  def scrollRowsFromTable
+    str1 = "SELECT * FROM funds_new"
     @conn.exec(str1) do |result|
       result.each do |row|
         yield row if block_given?
@@ -1483,9 +1493,52 @@ def something_to_s (input)
   return str_output
 end
 
-def get_fund_details
+# This function does multiple tasks simultaneously for each fund, one at
+# a time.
+# This multitasking is necessary to avoid using large, memory-guzzling
+# arrays.
+# These tasks are:
+# 1.  Scrape data from the pages downloaded from Yahoo Finance.
+# 2.  Fill in the remaining columns of the Postgres database with the
+#     detailed fund information.
+# 3.  Create a CSV file containing all of the fund information.
+
+# Please note that the "COPY" command in Postgres does not work in the 
+# production environment, because the shared hosting does not provide
+# root access.
+# The "\COPY" command only works in the Postgres command line and not
+# in Ruby scripts.
+# There are ways to output the results of Postgres queries to create a
+# CSV file, but that means having to parse data.  It just makes more
+# sense to write the data to the CSV file while also writing the data
+# to the Postgres database.
+
+def fund_details
+  require 'csv'
+  puts
+  puts '###########################################'
   puts 'SCRAPING FUND DETAILS FROM DOWNLOADED PAGES'
+  puts 'SAVING FUND DETAILS IN THE POSTGRES DATABASE'
+  puts 'SAVING FUND DETAILS IN THE OUTPUT CSV FILE'
   
+  # CREATE A CSV FILE CONTAINING ALL OF THE FUND INFORMATION
+  
+  # array_details = [symbol, category, family, style_size, style_value, 
+  # price, pcf, pb, pe, ps, expense_ratio, load_front, load_back, 
+  # min_inv, turnover, biggest_position, assets]
+  # NOTE: All inputs must be strings.
+  header = Array.new
+  header << 'Symbol' << 'Category' << 'Fund Family' 
+  header << 'Style (Size)' << 'Style (Value)' << 'Price' 
+  header << 'P/CF' << 'P/B' << 'PE' << 'P/S' << 'Expense Ratio'
+  header << 'Max. Front Load' << 'Max. Back Load' << 'Min. Inv.'
+  header << 'Turnover' << 'Biggest Position (%)' << 'Assets'
+  
+  path_output_csv = $dir_output + '/profile_all.csv'
+  CSV.open(path_output_csv, "w") do |csv| # w: overwrite
+    csv << header # Write the header row
+  end
+
   # Start the database  
   fd = FundDatabase.new()
   fd.connect
@@ -1525,18 +1578,24 @@ def get_fund_details
     # price, pcf, pb, pe, ps, expense_ratio, load_front, load_back, 
     # min_inv, turnover, biggest_position, assets]
     # NOTE: All inputs must be strings.
-    fd.updateFund array_details    
+    fd.updateFund array_details # Write the data to the database
+    
+    CSV.open(path_output_csv, "ab") do |csv| # ab: append
+      csv << array_details # Fill the the row
+    end
+      
     i += 1
     if rand < 0.01 || i==10
       rate_s = i / (Time.now() - time_start)
       remain_s = ($num_funds_total - i) / rate_s
       remain_m = remain_s/60
-      puts "Fund data scraping completed: " + i.to_s() + '/' + $num_funds_total.to_s()
+      puts "Detailed data scraping/writing completed: " + i.to_s() + '/' + $num_funds_total.to_s()
       puts "Minutes remaining: " + remain_m.to_s()
     end
   end
   puts 'FINISHED SCRAPING DETAILED FUND INFORMATION'
-  fd.printCSVmain('profile_all.csv') if $is_devel == true # Export database to CSV
+  
+  # fd.printCSVmain('profile_all.csv') if $is_devel == true # Export database to CSV
   fd.copyFundTable
   fd.disconnect
 end
@@ -1556,7 +1615,7 @@ def main
     fillDatabaseFundShort
   end
   download_fund_data
-  get_fund_details
+  fund_details
 end
 
 main
