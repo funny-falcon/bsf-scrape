@@ -408,14 +408,7 @@ end
 
 # Put contents of file into string
 def string_from_file (filename)
-  str_output = ''
-  f = File.open(filename, "r")
-  f.each_line do |line|
-    str_output += line
-  end
-  # The newline at the end of the file MUST be removed when
-  # acquiring the username and password.
-  str_output = str_output.gsub("\n", "")
+  str_output = File.readlines(filename).join('')
   return str_output
 end
 
