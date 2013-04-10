@@ -323,8 +323,8 @@ class FundDatabase
   end
   
   # Get symbols from table
-  def scrollSymbolsFromTable
-    str1 = "SELECT symbol FROM funds_new"
+  def scrollFundsFromTable
+    str1 = "SELECT * FROM funds_new"
     @conn.exec(str1) do |result|
       result.each do |row|
         yield row if block_given?
@@ -849,14 +849,14 @@ def fillDatabaseFundShort
   obj_array << ''
   
   symbol_array << 'CSVWX'
-  name_array << ''
+  name_array << 'Columbia Select Large-Cap Value Fund'
   type_array << 'Open-End Fund'
-  obj_array << ''
+  obj_array << 'Value-Large Cap'
   
   symbol_array << 'LSMBX'
-  name_array << ''
+  name_array << 'Columbia Small Cap Core Fund'
   type_array << 'Open-End Fund'
-  obj_array << ''
+  obj_array << 'Blend - Small Cap'
 
   symbol_array << 'IDHVF'
   name_array << ''
@@ -864,9 +864,9 @@ def fillDatabaseFundShort
   obj_array << ''
 
   symbol_array << 'EWU'
-  name_array << ''
+  name_array << 'iShares MSCI United Kingdom Inde'
   type_array << 'ETF'
-  obj_array << ''
+  obj_array << 'Country Fund-U.K.'
 
   symbol_array << 'EWVS'
   name_array << ''
@@ -874,29 +874,29 @@ def fillDatabaseFundShort
   obj_array << ''
 
   symbol_array << 'AIA'
-  name_array << ''
+  name_array << 'iShares S&P Asia 50 Index'
   type_array << 'ETF'
-  obj_array << ''
+  obj_array << 'Region Fund-Asian Pacific'
 
   symbol_array << 'JCVWX'
-  name_array << ''
+  name_array << 'John Hancock Funds - Classic Value Fund'
   type_array << 'Open-End Fund'
-  obj_array << ''
+  obj_array << 'Value'
 
   symbol_array << 'JGYIX'
-  name_array << ''
+  name_array << 'John Hancock Funds III - Global Shareholder Yield Fund'
   type_array << 'Open-End Fund'
-  obj_array << ''
+  obj_array << 'Global Equity'
 
   symbol_array << 'VICFX'
-  name_array << ''
+  name_array << 'Victory International Fund'
   type_array << 'Open-End Fund'
-  obj_array << ''
+  obj_array << 'International Equity'
 
   symbol_array << 'VEIAX'
-  name_array << ''
+  name_array << 'Virtus Emerging Markets Equity Income Fund'
   type_array << 'Open-End Fund'
-  obj_array << ''
+  obj_array << 'Emerging Market-Equity '
 
   symbol_array << 'A1A'
   name_array << ''
@@ -1052,7 +1052,7 @@ def download_fund_data
   # This is EXTREMELY crude, but it works.
   # I could not figure out how to extract the number of rows
   # with Postgres commands in Ruby.
-  fd.scrollSymbolsFromTable do |row|
+  fd.scrollFundsFromTable do |row|
     symbol_local = row['symbol']
     i +=1
   end
@@ -1060,7 +1060,7 @@ def download_fund_data
   
   i = 0 # Number of rows completed
   time_start = Time.now()
-  fd.scrollSymbolsFromTable do |row|
+  fd.scrollFundsFromTable do |row|
     symbol_local = row['symbol']
 
     url1 = url_fund_profile symbol_local
@@ -1494,7 +1494,8 @@ def fund_details
   # min_inv, turnover, biggest_position, assets]
   # NOTE: All inputs must be strings.
   header = Array.new
-  header << 'Symbol' << 'Category' << 'Fund Family' 
+  header << 'Symbol' << 'Name' << 'Type' << 'Objective'
+  header << 'Category' << 'Fund Family' 
   header << 'Style (Size)' << 'Style (Value)' << 'Price' 
   header << 'P/CF' << 'P/B' << 'PE' << 'P/S' << 'Expense Ratio'
   header << 'Max. Front Load' << 'Max. Back Load' << 'Min. Inv.'
@@ -1511,8 +1512,11 @@ def fund_details
   i = 0 # Number of rows completed
   
   time_start = Time.now()
-  fd.scrollSymbolsFromTable do |row|
+  fd.scrollFundsFromTable do |row|
     symbol= row['symbol']
+    name = row['name']
+    type = row['type']
+    objective = row['objective']
     dir_fund = $dir_downloads + '/' + symbol
     file1 = dir_fund + '/profile.html'
     file2 = dir_fund + '/holdings.html'
@@ -1533,22 +1537,30 @@ def fund_details
     pb = something_to_s(scrape_pb_now symbol)
     ps = something_to_s(scrape_ps_now symbol)
     pcf = something_to_s(scrape_pcf_now symbol)
-    array_details = Array.new
-    array_details << symbol << category << family 
-    array_details << style_size << style_value << price
-    array_details << pcf << pb << pe << ps << expense_ratio
-    array_details << load_front << load_back << min_inv
-    array_details << turnover << biggest_position << assets
+    array_details_db = Array.new
+    array_details_csv = Array.new
+    array_details_db << symbol # Name, type, and objective already there
+    array_details_csv << symbol << name << type << objective
+    array_details_db << category << family 
+    array_details_csv << category << family 
+    array_details_db << style_size << style_value << price
+    array_details_csv << style_size << style_value << price
+    array_details_db << pcf << pb << pe << ps << expense_ratio
+    array_details_csv << pcf << pb << pe << ps << expense_ratio
+    array_details_db << load_front << load_back << min_inv
+    array_details_csv << load_front << load_back << min_inv
+    array_details_db << turnover << biggest_position << assets
+    array_details_csv << turnover << biggest_position << assets
     
     # array_details = [symbol, category, family, style_size, style_value, 
     # price, pcf, pb, pe, ps, expense_ratio, load_front, load_back, 
     # min_inv, turnover, biggest_position, assets]
     # NOTE: All inputs must be strings.
     
-    fd.updateFund array_details # Write the data to the database
+    fd.updateFund array_details_db # Write the data to the database
     
     CSV.open(path_output_csv, "ab") do |csv| # ab: append
-      csv << array_details # Fill the row
+      csv << array_details_csv # Fill the row
     end
       
     i += 1
