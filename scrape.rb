@@ -410,6 +410,7 @@ end
 # Thanks to Keith R. Bennett for suggesting this solution on ruby.mn
 def string_from_file (filename)
   str_output = File.readlines(filename).join('')
+  str_output = str_output.gsub(",", "")
   return str_output
 end
 
