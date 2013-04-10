@@ -407,6 +407,7 @@ def select_length
 end
 
 # Put contents of file into string
+# Thanks to Keith R. Bennett for suggesting this solution on ruby.mn
 def string_from_file (filename)
   str_output = File.readlines(filename).join('')
   return str_output
