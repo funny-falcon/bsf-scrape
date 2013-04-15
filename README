@@ -19,6 +19,8 @@ sudo su postgres -c psql
 CREATE ROLE [local username] SUPERUSER LOGIN;
 \q
 createdb pg_bsf
+cd bsf-scrape
+ruby scrape.rb
 
 PRODUCTION ENVIRONMENT
 Host: WebFaction
@@ -37,6 +39,7 @@ cd bsf-scrape
 mkdir db
 echo '[db_username]' >> db/.username.txt
 echo '[db_password]' >> db/.password.txt
+sh nightly.sh
 
 
 
