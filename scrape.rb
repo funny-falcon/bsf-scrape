@@ -235,7 +235,7 @@ class FundDatabase
     command_create += 'load_front float,	'
     command_create += 'load_back float,	'
     command_create += 'min_inv int,	'
-    command_create += 'turnover varchar (6),	'
+    command_create += 'turnover float,	'
     command_create += 'biggest_position float,	'
     command_create += 'assets varchar(10),	'
     command_create += 'CONSTRAINT fundsnew_pkey PRIMARY KEY (index)) WITH (OIDS=FALSE);'
@@ -1551,6 +1551,9 @@ def fund_details
     array_details_csv << load_front << load_back << min_inv
     array_details_db << turnover << biggest_position << assets
     array_details_csv << turnover << biggest_position << assets
+    
+    # RESIZE the following columns if they're too small:
+    # category, family, assets
     
     # array_details = [symbol, category, family, style_size, style_value, 
     # price, pcf, pb, pe, ps, expense_ratio, load_front, load_back, 
