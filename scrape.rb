@@ -267,8 +267,6 @@ class FundDatabase
     assets = array_details [16]
     
     command_create = ""
-    #command_create += 'UPDATE fundsnew WHERE symbol=' 
-    #command_create += symbol + ' '
     command_create += "UPDATE fundsnew "
     command_create += "SET category='" + category + "',"
     command_create += "family='" + family + "',"
@@ -299,12 +297,14 @@ class FundDatabase
   def copyFundTable
     str1 = "DROP TABLE funds"
     str2 = "CREATE TABLE funds AS SELECT * FROM fundsnew"
+    str3 = 'ALTER TABLE funds ADD PRIMARY KEY (index);'
     begin
       @conn.exec(str2)
     rescue
       @conn.exec(str1)
       @conn.exec(str2)
     end
+    @conn.exec(str3)
   end
   
   # Prepared statements prevent SQL injection attacks.  However, for the connection, the prepared statements
