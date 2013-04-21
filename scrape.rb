@@ -193,10 +193,10 @@ end
 # Based on the example at:
 # http://marcclifton.wordpress.com/2012/11/12/an-example-of-using-postgresql-with-ruby/
 
-# There are two tables, funds_new and funds.  funds is used directly by
-# the web site.  funds_new is the table changed in this algorithm.
-# funds_new is copied to funds AFTER the updating is complete.
-# Thus, while funds_new is in flux while this script is being executed,
+# There are two tables, fundsnew and funds.  funds is used directly by
+# the web site.  fundsnew is the table changed in this algorithm.
+# fundsnew is copied to funds AFTER the updating is complete.
+# Thus, while fundsnew is in flux while this script is being executed,
 # the old data remains in place in funds.
 
 class FundDatabase 
@@ -216,8 +216,8 @@ class FundDatabase
   # Create our table of fund data
   def createFundTable
     command_create = ''
-    command_create += 'CREATE TABLE funds_new ( '
-    command_create += 'index int, '
+    command_create += 'CREATE TABLE fundsnew ( '
+    command_create += 'index serial NOT NULL, '
     command_create += 'symbol varchar(' + $len_symbol.to_s() + '), '
     command_create += 'name varchar(' + $len_name.to_s() + '), '
     command_create += 'type varchar(' + $len_type.to_s() + ' ), '
@@ -238,8 +238,7 @@ class FundDatabase
     command_create += 'turnover varchar (6),	'
     command_create += 'biggest_position float,	'
     command_create += 'assets varchar(10),	'
-    command_create += 'PRIMARY KEY (symbol)	'
-    command_create += ');'
+    command_create += 'CONSTRAINT fundsnew_pkey PRIMARY KEY (index)) WITH (OIDS=FALSE);'
     @conn.exec(command_create);
   end
   
@@ -268,9 +267,9 @@ class FundDatabase
     assets = array_details [16]
     
     command_create = ""
-    #command_create += 'UPDATE funds_new WHERE symbol=' 
+    #command_create += 'UPDATE fundsnew WHERE symbol=' 
     #command_create += symbol + ' '
-    command_create += "UPDATE funds_new "
+    command_create += "UPDATE fundsnew "
     command_create += "SET category='" + category + "',"
     command_create += "family='" + family + "',"
     command_create += "style_size='" + style_size + "',"
@@ -294,12 +293,12 @@ class FundDatabase
   
   # Drop our table of fund data
   def dropFundTable
-    @conn.exec("DROP TABLE funds_new")
+    @conn.exec("DROP TABLE fundsnew")
   end
   
   def copyFundTable
     str1 = "DROP TABLE funds"
-    str2 = "CREATE TABLE funds AS SELECT * FROM funds_new"
+    str2 = "CREATE TABLE funds AS SELECT * FROM fundsnew"
     begin
       @conn.exec(str2)
     rescue
@@ -313,7 +312,7 @@ class FundDatabase
   # performance improvement using prepared statements.
   def prepareInsertFundStatement
     str1 = "insert_fund"
-    str2 = "insert into funds_new (Index, Symbol, Name, Type, Objective) values ($1, $2, $3, $4, $5)"
+    str2 = "insert into fundsnew (Index, Symbol, Name, Type, Objective) values ($1, $2, $3, $4, $5)"
     @conn.prepare(str1, str2)
   end
   
@@ -324,7 +323,7 @@ class FundDatabase
   
   # Get symbols from table
   def scrollFundsFromTable
-    str1 = "SELECT * FROM funds_new"
+    str1 = "SELECT * FROM fundsnew"
     @conn.exec(str1) do |result|
       result.each do |row|
         yield row if block_given?
@@ -338,18 +337,18 @@ class FundDatabase
     puts 'Copying the database (initial data only) to: '
     puts csv_path
     begin
-      @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
+      @conn.exec ("COPY fundsnew TO '" + csv_path + "' With CSV HEADER;")
       system ("chmod 755 " + $dir_output)
     rescue
       # Allow the server to write to a client directory
       system ("chmod a+w " + $dir_output)
-      @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
+      @conn.exec ("COPY fundsnew TO '" + csv_path + "' With CSV HEADER;")
       system ("chmod 755 " + $dir_output)
       # For security reasons, end universal write access.
       # The Postgres superuser still has write access to the output file.
       # For good measure, we'll repeat the copy procedure just in case
       # (however unlikely) the old file was altered.
-      @conn.exec ("COPY funds_new TO '" + csv_path + "' With CSV HEADER;")
+      @conn.exec ("COPY fundsnew TO '" + csv_path + "' With CSV HEADER;")
     end
   end  
 end
