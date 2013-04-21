@@ -363,19 +363,19 @@ def delay
   puts
   puts 'DELAY MODE'
   puts 'This script will continue after ' + delay_min.to_s() + ' minutes'
-  puts 'or when you press any key, WHICHEVER COMES FIRST.'
+  puts 'or when you enter any integer greater than 9, WHICHEVER COMES FIRST.'
   begin
     timeout(delay_sec) do
-      begin
-        system("stty raw -echo")
-        str = STDIN.getc
-      ensure
-        system("stty -raw echo")
+      num_input = 0
+      while num_input <= 9
+        num_input = gets.chomp.to_i
       end
-    puts 'Delay mode terminated by user'
+      raise 'Entered an integer greater than 9'
     end
   rescue Timeout::Error
     puts 'Delay mode terminated by script'
+  rescue
+    puts 'Delay mode terminated by user'
   end
 end
 
@@ -384,24 +384,29 @@ end
 # Get user input
 # Short version is needed for quick results during development
 ##############################################################
+# NOTE: The old "enter any key" method to choose the short version
+# of the script resulted in the short version being executed
+# by the cronjob in the production environment.
+# Thus, the user has to enter an integer greater than 9 in order
+# to select the short version.
 def select_length
   puts
-  puts 'Press any key within 5 seconds to run the short version of this script.'
+  puts 'Enter any integer greater than 9 within 20 seconds '
+  puts 'to run the short version of this script.'
   puts 'Otherwise, the long version of this script will run.'
   begin
-    timeout(5) do
-      begin
-        system("stty raw -echo")
-        str = STDIN.getc
-      ensure
-        system("stty -raw echo")
+    timeout(20) do
+      num_input = 0
+      while num_input <= 9
+        num_input = gets.chomp.to_i
       end
       $exec_long = false
-      puts
-      puts "EXECUTING THE SHORT VERSION OF THIS SCRIPT" 
+      raise 'Entered an integer greater than 9'
     end
   rescue Timeout::Error
-    puts "EXECUTING THE LONG VERSION OF THIS SCRIPT"
+    puts 'EXECUTING THE LONG VERSION OF THIS SCRIPT'
+  rescue
+    puts 'EXECUTING THE SHORT VERSION OF THIS SCRIPT'
   end
 end
 
