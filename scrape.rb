@@ -35,8 +35,7 @@ $len_name = 0
 $len_type = 0
 $len_obj = 0
 $len_cat = 0
-$len_family = 0
-$len_stylebox = 0
+$len_fam = 0
 
 # Array of funds
 $arrayFund = []
@@ -222,8 +221,8 @@ class FundDatabase
     command_create += 'name varchar(' + $len_name.to_s() + '), '
     command_create += 'type varchar(' + $len_type.to_s() + ' ), '
     command_create += 'objective varchar(' + $len_obj.to_s() + '),	'
-    command_create += 'category varchar(100),	'
-    command_create += 'family varchar(100),	'
+    command_create += 'category varchar(6),	'
+    command_create += 'family varchar(6),	'
     command_create += 'style_size varchar(6),	'
     command_create += 'style_value varchar(6),	'
     command_create += 'price float,	'
@@ -287,6 +286,22 @@ class FundDatabase
     command_create += "WHERE symbol='" + symbol + "'"
     command_create += ";"
     @conn.exec(command_create);
+  end
+  
+  # Resize the category column
+  def resizeCategory (size)
+    command = ""
+    command += "ALTER TABLE fundsnew ALTER COLUMN category "
+    command += "type varchar(" + size.to_s() + ");"
+    @conn.exec(command)
+  end
+  
+  # Resize the family column
+  def resizeFamily (size)
+    command = ""
+    command += "ALTER TABLE fundsnew ALTER COLUMN family "
+    command += "type varchar(" + size.to_s() + ");"
+    @conn.exec(command)
   end
   
   # Drop our table of fund data
@@ -837,7 +852,7 @@ def fillDatabaseFundShort
   name_array << 'WisdomTree Japan SmallCap Dividend Fund'
   type_array << 'ETF'
   obj_array << 'Country Fund-Japan'
-  
+ 
   symbol_array << 'HTY'
   name_array << 'John Hancock Tax-Advantaged Global Shareholder Yield Fund'
   type_array << 'Closed-End Fund'
@@ -1522,10 +1537,6 @@ def fund_details
     name = row['name']
     type = row['type']
     objective = row['objective']
-    dir_fund = $dir_downloads + '/' + symbol
-    file1 = dir_fund + '/profile.html'
-    file2 = dir_fund + '/holdings.html'
-    file3 = dir_fund + '/quote.csv'
     category = something_to_s(scrape_cat symbol)
     family = something_to_s(scrape_fam symbol)
     assets = something_to_s(scrape_assets symbol)
@@ -1559,6 +1570,12 @@ def fund_details
     
     # RESIZE the following columns if they're too small:
     # category, family, assets
+    length_cat = category.length
+    length_fam = family.length
+    $len_cat = length_cat unless length_cat < $len_cat
+    $len_fam = length_fam unless length_fam < $len_fam
+    fd.resizeCategory($len_cat)
+    fd.resizeFamily($len_fam)
     
     # array_details = [symbol, category, family, style_size, style_value, 
     # price, pcf, pb, pe, ps, expense_ratio, load_front, load_back, 
