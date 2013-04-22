@@ -236,7 +236,7 @@ class FundDatabase
     command_create += 'min_inv int,	'
     command_create += 'turnover float,	'
     command_create += 'biggest_position float,	'
-    command_create += 'assets varchar(10),	'
+    command_create += 'assets float,	'
     command_create += 'CONSTRAINT fundsnew_pkey PRIMARY KEY (index)) WITH (OIDS=FALSE);'
     @conn.exec(command_create);
   end
@@ -282,7 +282,7 @@ class FundDatabase
     command_create += "min_inv=" + min_inv + ","
     command_create += "turnover=" + turnover + ","
     command_create += "biggest_position=" + biggest_position + ","
-    command_create += "assets='" + assets + "' "
+    command_create += "assets=" + assets + " "
     command_create += "WHERE symbol='" + symbol + "'"
     command_create += ";"
     @conn.exec(command_create);
@@ -1146,6 +1146,19 @@ def nil_to_0 (num_local)
   end
 end
 
+# OUTPUT: float
+def assets_to_num (str1)
+  num_output = nil
+  if str1.include? 'B'
+    str1.slice! 'B'
+    num_output = str_to_num str1
+  elsif str1.include? 'M'
+    str1.slice! 'M'
+    num_output = (str_to_num str1) / 1000
+  end
+  return num_output
+end
+
 # OUTPUT: string
 def scrape_cat_mf (symbol_local)
   filename = $dir_downloads + '/' + symbol_local + '/profile.html'
@@ -1539,7 +1552,7 @@ def fund_details
     objective = row['objective']
     category = something_to_s(scrape_cat symbol)
     family = something_to_s(scrape_fam symbol)
-    assets = something_to_s(scrape_assets symbol)
+    assets = something_to_s(assets_to_num (scrape_assets symbol))
     style_size = something_to_s(scrape_style_size symbol)
     style_value = something_to_s(scrape_style_value symbol)
     min_inv = something_to_s(scrape_mininv symbol)
