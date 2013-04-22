@@ -923,6 +923,11 @@ def fillDatabaseFundShort
   type_array << 'ETF'
   obj_array << ''
   
+  symbol_array << 'FMAGX'
+  name_array << 'Fidelity Magellan Fund'
+  type_array << 'Open-End Fund'
+  obj_array << 'Blend - Large Cap'
+  
   # Screen out funds not compatible with the mission of Bargain Stock Funds
   # Fill array with remaining funds
   n_array_last = symbol_array.length - 1
